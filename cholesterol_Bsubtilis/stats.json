@@ -1,0 +1,316 @@
+{
+ "curves": {
+  "TC": {
+   "slope": 121.847,
+   "intercept": 78.72033333333331,
+   "r2": 0.9984030006336999,
+   "syx": 14.805845761656046,
+   "n": 15,
+   "slope_se": 1.3515826177667707,
+   "int_se": 5.572717894801216,
+   "LOD": 0.40098887139991096,
+   "LOQ": 1.2151177921209424,
+   "blank_mean": 64.34,
+   "blank_sd": 1.0311643903859393,
+   "excluded": [],
+   "anova_F": 54.85498675588375,
+   "anova_p": 6.855538977779006e-45
+  },
+  "FC": {
+   "slope": 119.9249241146712,
+   "intercept": 61.48903878583468,
+   "r2": 0.9988515813300619,
+   "syx": 11.710715206661838,
+   "n": 13,
+   "slope_se": 1.2260629000165923,
+   "int_se": 4.4984210143414325,
+   "LOD": 0.3222462758870016,
+   "LOQ": 0.9765038663242472,
+   "blank_mean": 49.826666666666675,
+   "blank_sd": 1.1856362567555587,
+   "excluded": [
+    "D12",
+    "E12"
+   ],
+   "anova_F": 89.16973231913971,
+   "anova_p": 3.5147999346395227e-53
+  }
+ },
+ "summary": {
+  "paired_t": {
+   "t": 13.400804606218593,
+   "p": 3.526336358654479e-16
+  },
+  "wilcoxon_p": 1.8189894035458565e-12,
+  "diff_mean": 5.137619733344218,
+  "diff_sd": 2.4247171101435936,
+  "loa": [
+   0.38517419746277515,
+   9.890065269225662
+  ],
+  "pearson_r": 0.9518457942958825,
+  "pearson_p": 4.149732204971065e-21,
+  "spearman_rho": 0.903001876172608,
+  "spearman_p": 1.6178020195717868e-15,
+  "fc_on_tc_slope": 0.8937424110981301,
+  "fc_on_tc_int": 6.2489870421276805,
+  "conc_diff_mean": -4.935232521992252,
+  "conc_diff_sd": 10.389708603865595,
+  "conc_paired_p": 0.004634035967344337,
+  "CE_mean": 4.935232521992252,
+  "CE_sd": 10.389708603865595,
+  "CE_onesample_p": 0.004634035967344337,
+  "CE_sig_q05": 0,
+  "TC_plate_kw_p": 6.853841777233976e-06,
+  "TC_plate_means": [
+   16.660372071490368,
+   8.92090547270701,
+   1.1333477392998947
+  ],
+  "TC_plate_sds": [
+   3.797695503173061,
+   5.814620195925653,
+   7.199603689543173
+  ],
+  "TC_n_sig": 31,
+  "TC_red_mean": 10.45918056553893,
+  "TC_red_sd": 7.902013481271618,
+  "TC_red_median": 11.881716327709674,
+  "TC_red_range": [
+   -7.457331942323968,
+   22.654130483431334
+  ],
+  "TC_cv_median": 1.4158658177226617,
+  "TC_cv_max": 3.849682383114015,
+  "TC_pooled_sd": 8.001694571676278,
+  "FC_plate_kw_p": 0.00030745091116434224,
+  "FC_plate_means": [
+   20.38781159366159,
+   14.906293054680672,
+   7.395792197731218
+  ],
+  "FC_plate_sds": [
+   4.466769732545575,
+   6.613556519239336,
+   6.309732693002154
+  ],
+  "FC_n_sig": 36,
+  "FC_red_mean": 15.596800298883148,
+  "FC_red_sd": 7.419652031457397,
+  "FC_red_median": 17.3268401856416,
+  "FC_red_range": [
+   -0.7776858252083386,
+   28.99834905036823
+  ],
+  "FC_cv_median": 1.1425568666397083,
+  "FC_cv_max": 2.81629989644601,
+  "FC_pooled_sd": 5.886080347026744,
+  "ctrl_TC_FC_ratio": 1.0471646635158716,
+  "nominal_chol_ugml": 200,
+  "both_sig": 31,
+  "class_counts": {
+   "Moderate (10\u201320%)": 23,
+   "Low (0\u201310%)": 7,
+   "None (<0%)": 7,
+   "High (\u226520%)": 3
+  },
+  "sheet_vs_reanalysis_maxabs": {
+   "TC": 1.4526161887573608e-05,
+   "FC": 0.08795638136401962
+  },
+  "sensitivity": {
+   "fc_red_alt_mean": 11.615951785317062,
+   "diff_alt_mean": 1.1567712197781321,
+   "diff_alt_sd": 2.4352481552340994,
+   "p": 0.0046340359673443555,
+   "plate3_CE_mean": 8.083940306044227,
+   "CE_vs_ctrl": 25.057498471606326
+  }
+ },
+ "std": {
+  "TC": [
+   {
+    "well": "A04",
+    "std_conc": 0.0,
+    "signal": 63.38,
+    "excluded": false
+   },
+   {
+    "well": "A05",
+    "std_conc": 0.0,
+    "signal": 64.21,
+    "excluded": false
+   },
+   {
+    "well": "A06",
+    "std_conc": 0.0,
+    "signal": 65.43,
+    "excluded": false
+   },
+   {
+    "well": "B04",
+    "std_conc": 1.0,
+    "signal": 197.3,
+    "excluded": false
+   },
+   {
+    "well": "B05",
+    "std_conc": 1.0,
+    "signal": 198.2,
+    "excluded": false
+   },
+   {
+    "well": "B06",
+    "std_conc": 1.0,
+    "signal": 201.5,
+    "excluded": false
+   },
+   {
+    "well": "C04",
+    "std_conc": 2.0,
+    "signal": 330.8,
+    "excluded": false
+   },
+   {
+    "well": "C05",
+    "std_conc": 2.0,
+    "signal": 330.1,
+    "excluded": false
+   },
+   {
+    "well": "C06",
+    "std_conc": 2.0,
+    "signal": 338.7,
+    "excluded": false
+   },
+   {
+    "well": "D04",
+    "std_conc": 4.0,
+    "signal": 581.9,
+    "excluded": false
+   },
+   {
+    "well": "D05",
+    "std_conc": 4.0,
+    "signal": 571.0,
+    "excluded": false
+   },
+   {
+    "well": "D06",
+    "std_conc": 4.0,
+    "signal": 591.4,
+    "excluded": false
+   },
+   {
+    "well": "E04",
+    "std_conc": 8.0,
+    "signal": 1031.0,
+    "excluded": false
+   },
+   {
+    "well": "E05",
+    "std_conc": 8.0,
+    "signal": 1036.0,
+    "excluded": false
+   },
+   {
+    "well": "E06",
+    "std_conc": 8.0,
+    "signal": 1063.0,
+    "excluded": false
+   }
+  ],
+  "FC": [
+   {
+    "well": "A10",
+    "std_conc": 0.0,
+    "signal": 50.94,
+    "excluded": false
+   },
+   {
+    "well": "A11",
+    "std_conc": 0.0,
+    "signal": 49.96,
+    "excluded": false
+   },
+   {
+    "well": "A12",
+    "std_conc": 0.0,
+    "signal": 48.58,
+    "excluded": false
+   },
+   {
+    "well": "B10",
+    "std_conc": 1.0,
+    "signal": 178.9,
+    "excluded": false
+   },
+   {
+    "well": "B11",
+    "std_conc": 1.0,
+    "signal": 186.1,
+    "excluded": false
+   },
+   {
+    "well": "B12",
+    "std_conc": 1.0,
+    "signal": 190.8,
+    "excluded": false
+   },
+   {
+    "well": "C10",
+    "std_conc": 2.0,
+    "signal": 310.6,
+    "excluded": false
+   },
+   {
+    "well": "C11",
+    "std_conc": 2.0,
+    "signal": 313.3,
+    "excluded": false
+   },
+   {
+    "well": "C12",
+    "std_conc": 2.0,
+    "signal": 321.2,
+    "excluded": false
+   },
+   {
+    "well": "D10",
+    "std_conc": 4.0,
+    "signal": 526.8,
+    "excluded": false
+   },
+   {
+    "well": "D11",
+    "std_conc": 4.0,
+    "signal": 543.7,
+    "excluded": false
+   },
+   {
+    "well": "D12",
+    "std_conc": 4.0,
+    "signal": 25.7,
+    "excluded": true
+   },
+   {
+    "well": "E10",
+    "std_conc": 8.0,
+    "signal": 1026.0,
+    "excluded": false
+   },
+   {
+    "well": "E11",
+    "std_conc": 8.0,
+    "signal": 1010.0,
+    "excluded": false
+   },
+   {
+    "well": "E12",
+    "std_conc": 8.0,
+    "signal": 26.55,
+    "excluded": true
+   }
+  ]
+ }
+}
