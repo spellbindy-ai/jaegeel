@@ -8,7 +8,7 @@
   1) CDF 읽기 (한글/쉼표/괄호 경로 대응) -> 단위질량 행렬 (scan x m/z 35-450)
   2) 이온별 피크 검출 -> 동시 용출 이온 묶음(디컨볼루션) -> 성분(component)
   3) 시료 간 정렬(RT + 스펙트럼 유사도) -> 공통 성분(feature) 목록
-  4) 모든 시료에서 정량이온(quant ion) 면적을 같은 방식으로 재적분
+  4) 모든 시료에서 정량이온(quant ion) 면적을 같은 방식으로 재적분 -> TIC 환산 면적
   5) 내부표준(4-methyl-2-pentanol) 보정 -> IS 당량 반정량 농도 (ug/L)
   6) (선택) MSP 라이브러리 동정, (선택) n-알칸 RT로 머무름지수(RI) 계산
   7) 통계: 일원분산분석, Kruskal-Wallis, BH-FDR, PCA, 계층적 군집
@@ -182,7 +182,7 @@ def detect_components(t, X, S, noise, a):
     wmin = max(2, int(round(a.min_width / dt)))
     wmax = int(round(a.max_width / dt))
     wlen = int(round(60.0 / dt)) | 1
-    sc, mzs, pr = [], [], []
+    sc, mzs, pr, st = [], [], [], []
     for j in range(NMZ):
         y = S[:, j]
         if y.max() < a.snr * noise[j]:
@@ -190,14 +190,23 @@ def detect_components(t, X, S, noise, a):
         pk, pp = find_peaks(y, prominence=a.snr * noise[j],
                             width=(wmin, wmax), wlen=wlen)
         if len(pk):
+            # 정점 부근이 평평하면(최댓값의 99.5% 이상이 6점 이상) 검출기 포화 이온으로 본다
+            flat = np.array([(X[max(0, q - 10):q + 11, j] >=
+                              0.995 * X[max(0, q - 10):q + 11, j].max()).sum() >= 6 for q in pk])
             sc.append(pk); mzs.append(np.full(len(pk), j)); pr.append(pp["prominences"])
+            st.append(flat)
     if not sc:
         return []
     sc, mzs, pr = np.concatenate(sc), np.concatenate(mzs), np.concatenate(pr)
+    st = np.concatenate(st)
+    s_sc, s_mz, s_pr = sc[st], mzs[st], pr[st]      # 포화 이온은 성분 묶기에서 제외
+    sc, mzs, pr = sc[~st], mzs[~st], pr[~st]
+    if not len(sc):
+        return []
     score = np.zeros(len(t))
     np.add.at(score, sc, np.sqrt(pr))
-    score = uniform_filter1d(score, 5, mode="constant")
-    centers, _ = find_peaks(score, distance=5)
+    score = uniform_filter1d(score, 9, mode="constant")
+    centers, _ = find_peaks(score, distance=8)
     if not len(centers):
         return []
     pos = np.clip(np.searchsorted(centers, sc), 1, len(centers) - 1) if len(centers) > 1 \
@@ -207,7 +216,7 @@ def detect_components(t, X, S, noise, a):
         near = np.where(np.abs(sc - left) <= np.abs(right - sc), pos - 1, pos)
     else:
         near = pos
-    keep = np.abs(sc - centers[near]) <= 2
+    keep = np.abs(sc - centers[near]) <= 4
     near, mzs, pr = near[keep], mzs[keep], pr[keep]
     comps = []
     order = np.argsort(near, kind="stable")
@@ -219,7 +228,13 @@ def detect_components(t, X, S, noise, a):
             continue
         spec = np.zeros(NMZ, np.float32)
         np.maximum.at(spec, g_mz, g_pr)
-        comps.append({"rt": float(t[centers[g_near[0]]]), "spec": spec,
+        c0 = centers[g_near[0]]
+        sat = np.zeros(NMZ, bool)
+        hit = np.abs(s_sc - c0) <= 15               # 같은 성분의 포화 이온(±1.5 s)
+        if hit.any():
+            sat[s_mz[hit]] = True
+            np.maximum.at(spec, s_mz[hit], s_pr[hit])
+        comps.append({"rt": float(t[c0]), "spec": spec, "sat": sat,
                       "height": float(spec.max())})
     return comps
 
@@ -249,16 +264,22 @@ def build_features(all_comps, groups, a):
             for fi in bins.get(bb, ()):
                 f = feats[fi]
                 if abs(f["rt0"] - c["rt"]) <= a.rt_tol and si not in f["samples"]:
-                    cs_ = float(u @ f["u0"])
+                    if c["sat"].any() or f["sat"].any():   # 포화 이온은 빼고 비교
+                        ok = ~(c["sat"] | f["sat"])
+                        na, nb = np.linalg.norm(u[ok]), np.linalg.norm(f["u0"][ok])
+                        cs_ = float(u[ok] @ f["u0"][ok] / (na * nb)) if na > 0 and nb > 0 else 0.0
+                    else:
+                        cs_ = float(u @ f["u0"])
                     if cs_ >= best_cos:
                         best, best_cos = fi, cs_
         if best is None:
-            feats.append({"rt0": c["rt"], "u0": u, "rts": [c["rt"]],
-                          "specs": [u], "samples": {si}})
+            feats.append({"rt0": c["rt"], "u0": u, "rts": [c["rt"]], "specs": [u],
+                          "samples": {si}, "sat": c["sat"].copy(), "nsat": int(c["sat"].any())})
             bins.setdefault(b, []).append(len(feats) - 1)
         else:
             f = feats[best]
             f["rts"].append(c["rt"]); f["specs"].append(u); f["samples"].add(si)
+            f["sat"] |= c["sat"]; f["nsat"] += int(c["sat"].any())
     garr = np.array(groups)
     out = []
     for f in feats:
@@ -269,11 +290,17 @@ def build_features(all_comps, groups, a):
             continue
         spec = np.mean(f["specs"], axis=0) ** 2    # sqrt 가중 해제
         spec = spec / spec.max() * 100.0
-        cand = np.where(spec >= 25.0)[0]           # 정량이온: 세기 x sqrt(m/z) 최대
+        cand = np.where((spec >= 25.0) & ~f["sat"])[0]   # 포화된 이온은 정량에 쓰지 않는다
+        if not len(cand):
+            cand = np.where((spec >= 5.0) & ~f["sat"])[0]
+        if not len(cand):
+            cand = np.where(spec >= 25.0)[0]
+        # 정량이온: 세기 x sqrt(m/z) 최대
         q = cand[np.argmax(spec[cand] * np.sqrt(cand + MZ_MIN))]
         base = int(np.argmax(spec)) + MZ_MIN
         out.append({"rt": float(np.median(f["rts"])), "spec": spec, "quant": int(q) + MZ_MIN,
-                    "base": base, "n_det": int(det.sum()), "det": det})
+                    "base": base, "n_det": int(det.sum()), "det": det, "nsat": f["nsat"],
+                    "sat_ions": " ".join(str(i + MZ_MIN) for i in np.where(f["sat"])[0])})
     out.sort(key=lambda f: f["rt"])
     return out
 
@@ -297,13 +324,14 @@ def integrate(t, X, S, noise, feats, a):
         y = S[:, j]
         ap = lo + int(np.argmax(y[lo:hi]))
         nz = noise[j]
+        rise = max(3 * nz, 0.10 * y[ap])    # 이만큼 다시 올라가면 인접 피크로 본다
         # 정점에서 좌우로 내려가다 다시 올라가면(인접 피크) 멈춘다
         l, m = ap, y[ap]
         while l > max(0, ap - hw):
             l -= 1
             if y[l] < m:
                 m = y[l]
-            elif y[l] > m + 2 * nz:
+            elif y[l] > m + rise:
                 l += 1
                 break
         r, m = ap, y[ap]
@@ -311,7 +339,7 @@ def integrate(t, X, S, noise, feats, a):
             r += 1
             if y[r] < m:
                 m = y[r]
-            elif y[r] > m + 2 * nz:
+            elif y[r] > m + rise:
                 r -= 1
                 break
         if r - l < 2:
@@ -707,6 +735,11 @@ def main():
         A[i], _ = integrate(t, X, smooth(X), channel_noise(X), feats, a)
         log(f"[2/2] {p.name}: 적분 완료, 검출 {int((A[i] > 0).sum())}/{len(feats)}")
 
+    # 정량이온 면적 -> 전체 스펙트럼(TIC) 환산 면적. 정량이온이 달라도(예: A/B 조건 간)
+    # 값이 비교 가능해진다.
+    tic_factor = np.array([f["spec"].sum() / f["spec"][f["quant"] - MZ_MIN] for f in feats])
+    A = A * tic_factor[None, :]
+
     # ---- 내부표준 보정 -------------------------------------------------------
     log("\n내부표준(4-methyl-2-pentanol) 탐색")
     k_is = find_is(feats, a, len(samples))
@@ -760,9 +793,11 @@ def main():
         r = {"ID": f"F{k + 1:04d}", "Compound": labels[k], "CAS": f["cas"],
              "Match(0-1000)": f["match"], "Library hits (top 3)": f["hits"],
              "RT_min": round(f["rt"] / 60, 3), "RI": f["ri"], "Quant_mz": f["quant"],
+             "Quant_to_TIC_factor": round(float(tic_factor[k]), 3),
              "Base_mz": f["base"],
              "Top ions (m/z:rel%)": " ".join(f"{i + MZ_MIN}:{f['spec'][i]:.0f}" for i in top),
              "Flag": flags[k], "N_detected": int((A[:, k] > 0).sum()),
+             "Saturated_samples": f["nsat"], "Saturated_ions": f["sat_ions"],
              "ANOVA_p": pa[k], "ANOVA_FDR_q": qa[k], "KW_p": pk[k], "KW_FDR_q": qk[k]}
         for g in ugroups:
             v = C[garr == g, k]
